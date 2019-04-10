@@ -6,7 +6,7 @@ from terminaltables import AsciiTable, DoubleTable, SingleTable
 
 def main():
 
-  title = 'HeadHunter Moscow'
+  TITLE = 'HeadHunter Moscow'
 
   TABLE_DATA = (
     ('Development languages', 'Amount vacancies', 'Average salary'),
@@ -17,9 +17,9 @@ def main():
     ('Java script', get_amount_vacancies_for_hh('Программист Java script') ,predict_rub_salary_for_hh('Программист Java script')),
   )
 
-  display_table(TABLE_DATA,title)
+  display_table(TABLE_DATA,TITLE)
 
-  title = 'SuperJob Moscow'
+  TITLE = 'SuperJob Moscow'
 
   TABLE_DATA = (
     ('Development languages', 'Amount vacancies', 'Average salary'),
@@ -30,7 +30,7 @@ def main():
     ('Java script', get_amount_vacancies_for_sj('Программист Java script') ,predict_rub_salary_for_sj('Программист Java script')),
   )
 
-  display_table(TABLE_DATA,title)
+  display_table(TABLE_DATA,TITLE)
   
 
 
@@ -42,7 +42,12 @@ def display_table(TABLE_DATA,title):
 
 
 def get_predict_salary(salary_from, salary_to):
-  return statistics.mean([salary_from,salary_to])
+  if not salary_from : 
+    return salary_to * 0.8
+  if not salary_to  :
+    return salary_from * 1.2
+  average_salary = statistics.mean([salary_from,salary_to])
+  return average_salary
 
 def get_amount_vacancies_for_sj(vacancy):
   token = os.getenv("SecretKey")
@@ -75,25 +80,18 @@ def predict_rub_salary_for_sj(vacancy):
   base_url = 'https://api.superjob.ru/2.0/vacancies/'
   response = requests.get(base_url, headers=headers, params=params)
 
-  salaryList = []
-  for vacancy in response.json()['objects']:
-    if vacancy['payment_from'] == 0: 
-      averageSalary = vacancy['payment_to'] * 0.8
-      salaryList.append(averageSalary)
-      continue
-    if vacancy['payment_to'] == 0:
-      averageSalary = vacancy['payment_from'] * 1.2
-      salaryList.append(averageSalary)
-      continue
-    averageSalary = get_predict_salary(vacancy['payment_from'],vacancy['payment_to']) 
+  salary_list = []
+  for vacancy in response.json()['objects']: 
+    average_salary = get_predict_salary(vacancy['payment_from'],vacancy['payment_to']) 
+    salary_list.append(average_salary)
 
-  if len(salaryList) == 0:
+  if not salary_list:
     return 0
-  sortedSalary = sorted(salaryList)
-  minSalary = salaryList[0]
-  maxSalary = salaryList[-1]
-  totalAverageSalary = get_predict_salary(minSalary,maxSalary)
-  return totalAverageSalary
+  sorted_salary = sorted(salary_list)
+  min_salary = sorted_salary[0]
+  max_salary = sorted_salary[-1]
+  total_average_salary = get_predict_salary(min_salary,max_salary)
+  return total_average_salary
 
 def predict_rub_salary_for_hh(vacancy):
   headers = {
@@ -109,28 +107,20 @@ def predict_rub_salary_for_hh(vacancy):
   }
   base_url = 'https://api.hh.ru/vacancies'
   response = requests.get(base_url, headers=headers, params=params)
-  salaryList = []
+  salary_list = []
   for vacancy in response.json()['items']:
     salary = vacancy['salary']
-    if salary['from'] is None: 
-      averageSalary = salary['to'] * 0.8
-      salaryList.append(averageSalary)
-      continue
-    if salary['to'] is None:
-      averageSalary = salary['from'] * 1.2
-      salaryList.append(averageSalary)
-      continue
-    averageSalary = statistics.mean([salary['from'],salary['to']])
-    salaryList.append(averageSalary)
+    average_salary = get_predict_salary(salary['from'],salary['to'])
+    salary_list.append(average_salary)
 
-  if len(salaryList) == 0:
+  if not salary_list:
     return 0
     
-  sortedSalary = sorted(salaryList)
-  minSalary = salaryList[0]
-  maxSalary = salaryList[-1]
-  totalAverageSalary = get_predict_salary(minSalary,maxSalary)
-  return totalAverageSalary
+  sorted_salary = sorted(salary_list)
+  min_salary = sorted_salary[0]
+  max_salary = sorted_salary[-1]
+  total_average_salary = get_predict_salary(min_salary,max_salary)
+  return total_average_salary
     
 
 def get_amount_vacancies_for_hh(vacancy):
@@ -146,8 +136,8 @@ def get_amount_vacancies_for_hh(vacancy):
   }
   base_url = 'https://api.hh.ru/vacancies'
   response = requests.get(base_url, headers=headers, params=params)
-  amountVacancies = response.json()['found']
-  return amountVacancies
+  amount_vacancies = response.json()['found']
+  return amount_vacancies
 
 
 if __name__ == '__main__':
