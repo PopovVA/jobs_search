@@ -65,53 +65,44 @@ def get_amount_vacancies_for_sj(vacancy):
   return response.json()['total']
 
 def predict_rub_salary_for_sj(vacancy_name):
-  page = pages = 0
-  total_salary_list = [] 
-  while page <= pages:
+  page = 0
+  pages = 1
+  salary_list = []
+  total_salary = 0
+  while page < pages:
     token = os.getenv("SecretKey")
     headers = {
       'X-Api-App-Id': token
     }
     params = {
       'not_archive' : '1',
-      't': '4',
-      'catalogues': '48',
+      't': SJ_MOSCOW,
+      'catalogues': SJ_IT_CATALOG,
       'no_agreement': '1',
       'keyword': vacancy_name
     }
     base_url = 'https://api.superjob.ru/2.0/vacancies/'
     response = requests.get(base_url, headers=headers, params=params)
 
-    salary_list = []
     for vacancy in response.json()['objects']: 
       average_salary = predict_salary(vacancy['payment_from'],vacancy['payment_to']) 
       salary_list.append(average_salary)
-
-    if not salary_list:
-      page += 1
-      continue
+      total_salary += average_salary
       
-    sorted_salary = sorted(salary_list)
-    min_salary = sorted_salary[0]
-    max_salary = sorted_salary[-1]
-    total_average_salary = predict_salary(min_salary,max_salary)
-    total_salary_list.append(total_average_salary)
-
-  total_sorted_salary = sorted(total_salary_list)
-  total_min_salary = total_sorted_salary[0]
-  total_max_salary = total_sorted_salary[-1]
-  return predict_salary(total_min_salary,total_max_salary)
+  return total_salary/len(salary_list)
 
 def predict_rub_salary_for_hh(vacancy_name):
-  page = pages = 0
-  total_salary_list = [] 
-  while page <= pages:
+  page = 0
+  pages = 1
+  salary_list = []
+  total_salary = 0
+  while page < pages:
     headers = {
         'User-Agent': 'SearchingJob/1.0 (m.vadimpopov@gmail.com)'
     }   
     params = {
       'text' : vacancy_name,
-      'area' : '1',
+      'area' : HH_MOSCOW,
       'period' : '30',
       'page' : page,
       'only_with_salary' : 'true',
@@ -120,30 +111,16 @@ def predict_rub_salary_for_hh(vacancy_name):
       'premium' : False
     }
     base_url = 'https://api.hh.ru/vacancies'
-    response = requests.get(base_url, headers=headers, params=params)
-    response = response.json()
+    response = requests.get(base_url, headers=headers, params=params).json()
     pages = response['pages']
-    salary_list = []
-    for vacancy in response['items']:      
+
+    for vacancy in response['items']: 
       salary = vacancy['salary']
-      average_salary = predict_salary(salary['from'],salary['to'])
+      average_salary = predict_salary(salary['from'],salary['to']) 
       salary_list.append(average_salary)
+      total_salary += average_salary
     
-    if not salary_list:
-      page += 1
-      continue
-
-    sorted_salary = sorted(salary_list)
-    min_salary = sorted_salary[0]
-    max_salary = sorted_salary[-1]
-    total_average_salary = predict_salary(min_salary,max_salary)
-    total_salary_list.append(total_average_salary)
-    page += 1
-
-  total_sorted_salary = sorted(total_salary_list)
-  total_min_salary = total_sorted_salary[0]
-  total_max_salary = total_sorted_salary[-1]
-  return predict_salary(total_min_salary,total_max_salary)
+  return total_salary/len(salary_list)
     
 
 def get_amount_vacancies_for_hh(vacancy):
@@ -152,7 +129,7 @@ def get_amount_vacancies_for_hh(vacancy):
   }
   params = {
     'text' : vacancy,
-    'area' : '1',
+    'area' : HH_MOSCOW,
     'period' : '30',
     'only_with_salary' : 'true',
     'per_page': '1'
@@ -164,4 +141,7 @@ def get_amount_vacancies_for_hh(vacancy):
 
 
 if __name__ == '__main__':
+ HH_MOSCOW = '1'
+ SJ_IT_CATALOG = '48'
+ SJ_MOSCOW = '4'
  main()
