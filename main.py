@@ -75,7 +75,6 @@ def predict_rub_salary_for_sj(vacancy_name):
     params = {
       'not_archive' : '1',
       't': '4',
-      'page': page,
       'catalogues': '48',
       'no_agreement': '1',
       'keyword': vacancy_name
@@ -89,12 +88,14 @@ def predict_rub_salary_for_sj(vacancy_name):
       salary_list.append(average_salary)
 
     if not salary_list:
-      return 0
+      page += 1
+      continue
+      
     sorted_salary = sorted(salary_list)
     min_salary = sorted_salary[0]
     max_salary = sorted_salary[-1]
     total_average_salary = predict_salary(min_salary,max_salary)
-    total_salary_list.appen(total_average_salary)
+    total_salary_list.append(total_average_salary)
 
   total_sorted_salary = sorted(total_salary_list)
   total_min_salary = total_sorted_salary[0]
